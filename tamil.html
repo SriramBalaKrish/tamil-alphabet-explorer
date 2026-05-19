@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamil Alphabet Explorer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff9f0; min-height: 100vh; }
+  #app { max-width: 900px; margin: 0 auto; padding: 12px; }
+
+  /* NAV */
+  .nav { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .nav-btn { padding: 10px 18px; border: none; border-radius: 30px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 3px 0 rgba(0,0,0,.15); }
+  .nav-btn:active { transform: scale(.95); }
+  .nav-btn.active { transform: scale(1.05); box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .nav-home { background: #ff8c42; color: #fff; }
+  .nav-vowels { background: #a855f7; color: #fff; }
+  .nav-cons { background: #3b82f6; color: #fff; }
+  .nav-match { background: #10b981; color: #fff; }
+  .nav-quiz { background: #f43f5e; color: #fff; }
+
+  /* HOME */
+  .home { text-align: center; padding: 20px 10px; }
+  .home-title { font-size: 2.2rem; font-weight: 900; color: #7c3aed; margin-bottom: 6px; }
+  .home-sub { font-size: 1.1rem; color: #6b7280; margin-bottom: 24px; }
+  .mascot { font-size: 80px; animation: bounce 1.2s infinite; display: inline-block; margin-bottom: 10px; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+  .home-cards { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
+  .home-card { background: #fff; border-radius: 20px; padding: 18px 22px; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,.1); transition: transform .15s; min-width: 130px; text-align: center; }
+  .home-card:hover { transform: translateY(-4px); }
+  .home-card .hc-icon { font-size: 40px; }
+  .home-card .hc-label { font-size: 13px; font-weight: 700; margin-top: 6px; }
+
+  /* ALPHABET GRID */
+  .section-title { text-align: center; font-size: 1.6rem; font-weight: 800; margin: 8px 0 16px; }
+  .alpha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+  .letter-card { background: #fff; border-radius: 18px; padding: 14px 8px; text-align: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.1); transition: transform .2s, box-shadow .2s; border: 3px solid transparent; user-select: none; }
+  .letter-card:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 7px 16px rgba(0,0,0,.12); }
+  .letter-card.playing { border-color: #fbbf24; transform: scale(1.08); }
+  .lc-letter { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+  .lc-roman { font-size: 11px; color: #9ca3af; margin: 2px 0; }
+  .lc-pic { font-size: 2rem; margin: 4px 0; }
+  .lc-word { font-size: 11px; color: #374151; font-weight: 600; }
+  .lc-tap { font-size: 10px; color: #d1d5db; margin-top: 3px; }
+
+  /* COLORS for vowels/consonants */
+  .vowel-card { border-top: 5px solid #a855f7; }
+  .vowel-card .lc-letter { color: #7c3aed; }
+  .cons-card { border-top: 5px solid #3b82f6; }
+  .cons-card .lc-letter { color: #1d4ed8; }
+
+  /* MATCH GAME */
+  .match-area { padding: 8px 0; }
+  .match-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; align-items: center; }
+  .match-letter { background: #ede9fe; border-radius: 14px; padding: 14px; text-align: center; font-size: 2rem; font-weight: 800; color: #7c3aed; cursor: pointer; border: 3px solid transparent; transition: all .2s; }
+  .match-pic { background: #fef3c7; border-radius: 14px; padding: 14px; text-align: center; font-size: 1.8rem; cursor: pointer; border: 3px solid transparent; transition: all .2s; }
+  .match-letter.selected, .match-pic.selected { border-color: #f59e0b; background: #fef9c3; transform: scale(1.06); }
+  .match-letter.correct, .match-pic.correct { border-color: #10b981; background: #d1fae5; }
+  .match-letter.wrong, .match-pic.wrong { border-color: #ef4444; background: #fee2e2; animation: shake .3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .match-word { font-size: 11px; font-weight: 600; color: #6b7280; }
+  .match-score { text-align: center; font-size: 1.2rem; font-weight: 700; color: #059669; margin: 10px 0; }
+  .btn-big { display: block; margin: 14px auto; padding: 12px 36px; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: 800; cursor: pointer; background: #10b981; color: #fff; box-shadow: 0 4px 0 #059669; transition: transform .15s; }
+  .btn-big:active { transform: scale(.96); }
+
+  /* QUIZ */
+  .quiz-q { text-align: center; margin-bottom: 20px; }
+  .quiz-letter { font-size: 5rem; font-weight: 900; color: #7c3aed; animation: pop .3s; }
+  @keyframes pop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+  .quiz-prompt { font-size: 1.1rem; color: #6b7280; margin-top: 6px; }
+  .quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 500px; margin: 0 auto 16px; }
+  .quiz-opt { background: #fff; border-radius: 16px; padding: 18px 10px; text-align: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.1); font-size: 2.4rem; border: 3px solid transparent; transition: all .2s; }
+  .quiz-opt:hover { transform: scale(1.05); }
+  .quiz-opt.correct { border-color: #10b981; background: #d1fae5; animation: celebrate .4s; }
+  .quiz-opt.wrong { border-color: #ef4444; background: #fee2e2; animation: shake .3s; }
+  @keyframes celebrate { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .quiz-word { font-size: 11px; font-weight: 600; color: #6b7280; display: block; margin-top: 4px; }
+  .quiz-score { text-align: center; }
+  .stars { font-size: 2rem; letter-spacing: 4px; }
+  .score-num { font-size: 1.3rem; font-weight: 700; color: #7c3aed; }
+  .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+
+  /* PROGRESS BAR */
+  .progress-bar { background: #e5e7eb; border-radius: 99px; height: 10px; margin: 8px 0 16px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a855f7, #3b82f6); transition: width .4s; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+  .tab { padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; }
+  .tab.active { background: #7c3aed; color: #fff; }
+  .tab:not(.active) { background: #ede9fe; color: #7c3aed; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <button class="nav-btn nav-home active" onclick="showPage('home')">🏠 Home</button>
+    <button class="nav-btn nav-vowels" onclick="showPage('vowels')">அ Vowels</button>
+    <button class="nav-btn nav-cons" onclick="showPage('consonants')">க Consonants</button>
+    <button class="nav-btn nav-match" onclick="showPage('match')">🎯 Match</button>
+    <button class="nav-btn nav-quiz" onclick="showPage('quiz')">⭐ Quiz</button>
+  </div>
+  <div id="page"></div>
+</div>
+
+<canvas class="confetti" id="confettiCanvas"></canvas>
+
+<script>
+const vowels = [
+  {l:'அ',r:'a',pic:'🦢',word:'அன்னம்'},
+  {l:'ஆ',r:'aa',pic:'🐄',word:'ஆடு'},
+  {l:'இ',r:'i',pic:'🎶',word:'இசை'},
+  {l:'ஈ',r:'ii',pic:'🪰',word:'ஈ'},
+  {l:'உ',r:'u',pic:'🥜',word:'உளுந்து'},
+  {l:'ஊ',r:'uu',pic:'🧶',word:'ஊசி'},
+  {l:'எ',r:'e',pic:'🐂',word:'எருது'},
+  {l:'ஏ',r:'ee',pic:'🪜',word:'ஏணி'},
+  {l:'ஐ',r:'ai',pic:'🦋',word:'ஐந்து'},
+  {l:'ஒ',r:'o',pic:'🐪',word:'ஒட்டகம்'},
+  {l:'ஓ',r:'oo',pic:'🚢',word:'ஓடம்'},
+  {l:'ஔ',r:'au',pic:'💊',word:'ஔடதம்'},
+];
+const consonants = [
+  {l:'க',r:'ka',pic:'⛵',word:'கப்பல்'},
+  {l:'ங',r:'nga',pic:'🐚',word:'சங்கு'},
+  {l:'ச',r:'cha',pic:'🌙',word:'சந்திரன்'},
+  {l:'ஞ',r:'gna',pic:'🧘',word:'ஞானி'},
+  {l:'ட',r:'da',pic:'🥁',word:'டமாரம்'},
+  {l:'ண',r:'na',pic:'🥗',word:'உணவு'},
+  {l:'த',r:'tha',pic:'🐸',word:'தவளை'},
+  {l:'ந',r:'na',pic:'🧑‍🤝‍🧑',word:'நண்பன்'},
+  {l:'ப',r:'pa',pic:'🪁',word:'பட்டம்'},
+  {l:'ம',r:'ma',pic:'🔔',word:'மணி'},
+  {l:'ய',r:'ya',pic:'🐇',word:'முயல்'},
+  {l:'ர',r:'ra',pic:'🪚',word:'ரம்பம்'},
+  {l:'ல',r:'la',pic:'💰₹',word:'லட்சுமி'},
+  {l:'வ',r:'va',pic:'🐞',word:'வண்டு'},
+  {l:'ழ',r:'zha',pic:'🍎🍌🍇',word:'பழங்கள்'},
+  {l:'ள',r:'la',pic:'🌽',word:'சோளம்'},
+  {l:'ற',r:'ra',pic:'🐦',word:'பறவை'},
+  {l:'ன',r:'na',pic:'👑',word:'மன்னன்'},
+];
+
+let currentPage = 'home';
+let synth = window.speechSynthesis;
+let tamilVoice = null;
+
+function loadVoice() {
+  const voices = synth.getVoices();
+  // Priority: Tamil female > Tamil any > Indian English female > Indian English any
+  tamilVoice =
+    voices.find(v => /ta/i.test(v.lang) && /female|woman/i.test(v.name)) ||
+    voices.find(v => /ta-IN/i.test(v.lang)) ||
+    voices.find(v => /ta/i.test(v.lang)) ||
+    voices.find(v => /en-IN/i.test(v.lang) && /female|woman/i.test(v.name)) ||
+    voices.find(v => /en-IN/i.test(v.lang)) ||
+    voices.find(v => /female|woman/i.test(v.name)) ||
+    null;
+}
+
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoice;
+loadVoice();
+
+// Sound effects using Web Audio API
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+
+function playTone(freq, type, duration, vol=0.3) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playCorrect() {
+  playTone(523, 'sine', 0.15, 0.3);
+  setTimeout(() => playTone(659, 'sine', 0.15, 0.3), 120);
+  setTimeout(() => playTone(784, 'sine', 0.25, 0.35), 240);
+}
+
+function playWrong() {
+  playTone(300, 'sawtooth', 0.2, 0.25);
+  setTimeout(() => playTone(250, 'sawtooth', 0.2, 0.25), 150);
+}
+
+function playTap() {
+  playTone(880, 'sine', 0.1, 0.15);
+}
+
+function playMatch() {
+  // Indian-ish celebratory arpeggio
+  [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'sine',0.18,0.28), i*90));
+}
+
+let quizScore = 0;
+let quizTotal = 0;
+let quizCurrent = null;
+let quizAnswered = false;
+let matchState = { sel: null, selType: null, matched: new Set(), wrong: null };
+let matchData = [];
+let matchScore = 0;
+let confettiAnim = null;
+
+function speak(text, onend) {
+  if (!synth) return;
+  synth.cancel();
+  let u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ta-IN';
+  u.rate = 0.8;
+  u.pitch = 1.2;
+  if (tamilVoice) u.voice = tamilVoice;
+  if (onend) u.onend = onend;
+  synth.speak(u);
+}
+
+function speakLetter(letter, word, cardEl) {
+  if (cardEl) {
+    cardEl.classList.add('playing');
+    setTimeout(() => cardEl.classList.remove('playing'), 900);
+  }
+  playTap();
+  speak(letter + '... ' + word);
+}
+
+function showPage(p) {
+  currentPage = p;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const map = {home:'nav-home',vowels:'nav-vowels',consonants:'nav-cons',match:'nav-match',quiz:'nav-quiz'};
+  document.querySelector('.'+map[p])?.classList.add('active');
+  const el = document.getElementById('page');
+  if (p === 'home') el.innerHTML = renderHome();
+  else if (p === 'vowels') el.innerHTML = renderAlpha('vowels');
+  else if (p === 'consonants') el.innerHTML = renderAlpha('consonants');
+  else if (p === 'match') { initMatch(); el.innerHTML = renderMatch(); }
+  else if (p === 'quiz') { initQuiz(); el.innerHTML = renderQuiz(); }
+}
+
+function renderHome() {
+  return `<div class="home">
+    <div class="mascot">🦚</div>
+    <div class="home-title">தமிழ் கற்போம்!</div>
+    <div class="home-sub">Let's learn Tamil alphabets!</div>
+    <div class="home-cards">
+      <div class="home-card" onclick="showPage('vowels')" style="background:#ede9fe">
+        <div class="hc-icon">அ</div>
+        <div class="hc-label" style="color:#7c3aed">Vowels<br>உயிரெழுத்து</div>
+      </div>
+      <div class="home-card" onclick="showPage('consonants')" style="background:#dbeafe">
+        <div class="hc-icon">க</div>
+        <div class="hc-label" style="color:#1d4ed8">Consonants<br>மெய்யெழுத்து</div>
+      </div>
+      <div class="home-card" onclick="showPage('match')" style="background:#d1fae5">
+        <div class="hc-icon">🎯</div>
+        <div class="hc-label" style="color:#059669">Match Game<br>பொருத்து</div>
+      </div>
+      <div class="home-card" onclick="showPage('quiz')" style="background:#fef9c3">
+        <div class="hc-icon">⭐</div>
+        <div class="hc-label" style="color:#b45309">Quiz<br>வினாடி வினா</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAlpha(type) {
+  const items = type === 'vowels' ? vowels : consonants;
+  const cls = type === 'vowels' ? 'vowel-card' : 'cons-card';
+  const title = type === 'vowels' ? '🔵 உயிரெழுத்து — Vowels' : '🔷 மெய்யெழுத்து — Consonants';
+  let cards = items.map((it,i) => `
+    <div class="letter-card ${cls}" id="lc${type}${i}" onclick="speakLetter('${it.l}','${it.word}',this)">
+      <div class="lc-letter">${it.l}</div>
+      <div class="lc-roman">${it.r}</div>
+      <div class="lc-pic">${it.pic}</div>
+      <div class="lc-word">${it.word}</div>
+      <div class="lc-tap">👆 tap!</div>
+    </div>`).join('');
+  return `<div class="section-title">${title}</div><div class="alpha-grid">${cards}</div>`;
+}
+
+function shuffle(arr) { return [...arr].sort(()=>Math.random()-.5); }
+
+function initMatch() {
+  const pool = shuffle([...vowels,...consonants]).slice(0,6);
+  matchData = pool;
+  matchState = { sel: null, selType: null, matched: new Set(), wrong: null };
+  matchScore = 0;
+}
+
+function renderMatch() {
+  const pics = shuffle(matchData.map((it,i)=>({...it,idx:i})));
+  let rows = matchData.map((it,i)=>`
+    <div class="match-letter" id="ml${i}" onclick="matchClick('letter',${i})">${it.l}</div>
+    <div class="match-pic" id="mp${pics.findIndex(p=>p.idx===i)}" data-idx="${i}" onclick="matchClick('pic',${pics.findIndex(p=>p.idx===i)})">${it.pic}<span class="match-word">${it.word}</span></div>
+  `).join('');
+  // Actually render as two separate columns
+  let letters = matchData.map((it,i)=>`<div class="match-letter" id="ml${i}" onclick="matchClick('letter',${i})">${it.l}</div>`).join('');
+  let picsHtml = pics.map((it,i)=>`<div class="match-pic" id="mp${i}" data-idx="${it.idx}" onclick="matchClick('pic',${i})">${it.pic}<div class="match-word">${it.word}</div></div>`).join('');
+  window._matchPics = pics;
+  return `<div class="section-title">🎯 Match the Letter!</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto">
+    <div style="display:flex;flex-direction:column;gap:10px">${letters}</div>
+    <div style="display:flex;flex-direction:column;gap:10px">${picsHtml}</div>
+  </div>
+  <button class="btn-big" onclick="initMatch();showPage('match')">🔄 New Game</button>`;
+}
+
+function matchClick(type, idx) {
+  const pics = window._matchPics;
+  if (matchState.sel === null) {
+    matchState.sel = idx;
+    matchState.selType = type;
+    const el = document.getElementById((type==='letter'?'ml':'mp')+idx);
+    if (el) el.classList.add('selected');
+  } else {
+    if (matchState.selType === type) {
+      const old = document.getElementById((matchState.selType==='letter'?'ml':'mp')+matchState.sel);
+      if (old) old.classList.remove('selected');
+      matchState.sel = idx;
+      const el = document.getElementById((type==='letter'?'ml':'mp')+idx);
+      if (el) el.classList.add('selected');
+      return;
+    }
+    let letterIdx = type === 'letter' ? idx : matchState.sel;
+    let picSlot = type === 'pic' ? idx : matchState.sel;
+    const picDataIdx = pics[picSlot].idx;
+    const lEl = document.getElementById('ml'+letterIdx);
+    const pEl = document.getElementById('mp'+picSlot);
+    if (letterIdx === picDataIdx) {
+      if (lEl) { lEl.classList.remove('selected'); lEl.classList.add('correct'); }
+      if (pEl) { pEl.classList.remove('selected'); pEl.classList.add('correct'); }
+      matchScore++;
+      playMatch();
+      speak(matchData[letterIdx].l + '... ' + matchData[letterIdx].word);
+      if (matchScore === matchData.length) { setTimeout(()=>{ launchConfetti(); speak('சாபாஷ்! மிகவும் நன்று!'); }, 200); }
+    } else {
+      playWrong();
+      if (lEl) { lEl.classList.remove('selected'); lEl.classList.add('wrong'); setTimeout(()=>lEl.classList.remove('wrong'),500); }
+      if (pEl) { pEl.classList.remove('selected'); pEl.classList.add('wrong'); setTimeout(()=>pEl.classList.remove('wrong'),500); }
+    }
+    matchState.sel = null;
+    matchState.selType = null;
+  }
+}
+
+function initQuiz() {
+  quizScore = 0; quizTotal = 0; quizAnswered = false;
+  nextQuiz();
+}
+
+function nextQuiz() {
+  quizAnswered = false;
+  const all = [...vowels, ...consonants];
+  const correct = all[Math.floor(Math.random()*all.length)];
+  let opts = [correct];
+  while (opts.length < 4) {
+    const o = all[Math.floor(Math.random()*all.length)];
+    if (!opts.find(x=>x.l===o.l)) opts.push(o);
+  }
+  opts = shuffle(opts);
+  quizCurrent = { correct, opts };
+  quizTotal++;
+}
+
+function renderQuiz() {
+  if (!quizCurrent) return '';
+  const {correct, opts} = quizCurrent;
+  let optHtml = opts.map((o,i)=>`
+    <div class="quiz-opt" id="qo${i}" onclick="checkQuiz(${i})">
+      ${o.pic}<span class="quiz-word">${o.word}</span>
+    </div>`).join('');
+  const answered = quizTotal - 1;
+  return `<div class="quiz-q">
+    <div class="quiz-letter" id="quizLetter">${correct.l}</div>
+    <div class="quiz-prompt">Which picture matches this letter?</div>
+  </div>
+  <div class="quiz-opts">${optHtml}</div>
+  `;
+}
+
+function checkQuiz(i) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const {correct, opts} = quizCurrent;
+  const chosen = opts[i];
+  const el = document.getElementById('qo'+i);
+  if (chosen.l === correct.l) {
+    el.classList.add('correct');
+    quizScore++;
+    playCorrect();
+    speak('சரி! சாபாஷ்! ' + correct.l + '... ' + correct.word);
+    launchConfetti();
+  } else {
+    el.classList.add('wrong');
+    const ci = opts.findIndex(o=>o.l===correct.l);
+    document.getElementById('qo'+ci)?.classList.add('correct');
+    playWrong();
+    speak('இல்லை... ' + correct.l + '... ' + correct.word);
+  }
+  const scoreEl = document.getElementById('quizScoreNum');
+  if (scoreEl) scoreEl.textContent = `Score: ${quizScore} / ${quizTotal}`;
+  setTimeout(()=>{ nextQuiz(); showPage('quiz'); }, 1400);
+}
+
+// Confetti
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const pieces = Array.from({length:80},()=>({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height,
+    r: Math.random()*6+4, d: Math.random()*80+40,
+    color: ['#a855f7','#3b82f6','#f59e0b','#10b981','#f43f5e'][Math.floor(Math.random()*5)],
+    tilt: Math.random()*10-10, tiltAngle: 0, tiltSpeed: Math.random()*.07+.05
+  }));
+  let t = 0;
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p => {
+      p.tiltAngle += p.tiltSpeed;
+      p.y += (Math.cos(t+p.d)+1.5)*1.8;
+      p.x += Math.sin(t)*1.2;
+      p.tilt = Math.sin(p.tiltAngle)*12;
+      ctx.beginPath(); ctx.lineWidth=p.r;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x+p.tilt+p.r/3,p.y);
+      ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/2);
+      ctx.stroke();
+    });
+    t+=.04;
+    if (t < 3.5) confettiAnim = requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+showPage('home');
+</script>
+</body>
+</html>
