@@ -1,168 +1,354 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tamil Alphabet Explorer</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff9f0; min-height: 100vh; }
-  #app { max-width: 900px; margin: 0 auto; padding: 12px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multilingual Alphabet Explorer</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #fff9f0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+    }
+    
+    /* Interactive States & Animations */
+    .home-card, .letter-card, .match-letter, .match-pic, .quiz-opt {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    
+    .home-card:hover, .letter-card:hover, .quiz-opt:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+    }
 
-  /* NAV */
-  .nav { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .nav-btn { padding: 10px 18px; border: none; border-radius: 30px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 3px 0 rgba(0,0,0,.15); }
-  .nav-btn:active { transform: scale(.95); }
-  .nav-btn.active { transform: scale(1.05); box-shadow: 0 4px 0 rgba(0,0,0,.25); }
-  .nav-home { background: #ff8c42; color: #fff; }
-  .nav-vowels { background: #a855f7; color: #fff; }
-  .nav-cons { background: #3b82f6; color: #fff; }
-  .nav-match { background: #10b981; color: #fff; }
-  .nav-quiz { background: #f43f5e; color: #fff; }
+    /* Clear focus indicator for keyboard users */
+    .home-card:focus-visible, .letter-card:focus-visible, 
+    .match-letter:focus-visible, .match-pic:focus-visible, .quiz-opt:focus-visible {
+      outline: 3px solid #0d6efd !important;
+      outline-offset: 3px;
+    }
+    
+    .letter-card.playing {
+      border-color: #d97706 !important; /* Darker yellow for accessibility contrast */
+      transform: scale(1.05);
+    }
+    
+    .mascot {
+      font-size: 70px;
+      animation: bounce 1.2s infinite;
+      display: inline-block;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
 
-  /* HOME */
-  .home { text-align: center; padding: 20px 10px; }
-  .home-title { font-size: 2.2rem; font-weight: 900; color: #7c3aed; margin-bottom: 6px; }
-  .home-sub { font-size: 1.1rem; color: #6b7280; margin-bottom: 24px; }
-  .mascot { font-size: 80px; animation: bounce 1.2s infinite; display: inline-block; margin-bottom: 10px; }
-  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
-  .home-cards { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
-  .home-card { background: #fff; border-radius: 20px; padding: 18px 22px; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,.1); transition: transform .15s; min-width: 130px; text-align: center; }
-  .home-card:hover { transform: translateY(-4px); }
-  .home-card .hc-icon { font-size: 40px; }
-  .home-card .hc-label { font-size: 13px; font-weight: 700; margin-top: 6px; }
+    /* Game State Stylings - High Contrast Variations */
+    .match-letter.selected, .match-pic.selected {
+      border-color: #b45309 !important;
+      background-color: #fef3c7 !important;
+      transform: scale(1.03);
+    }
+    
+    .match-letter.correct, .match-pic.correct {
+      border-color: #157347 !important;
+      background-color: #d1fae5 !important;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+    
+    .match-letter.wrong, .match-pic.wrong, .quiz-opt.wrong {
+      border-color: #bb2d3b !important;
+      background-color: #f8d7da !important;
+      animation: shake 0.3s;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .quiz-opt.correct {
+      border-color: #157347 !important;
+      background-color: #d1fae5 !important;
+      animation: celebrate 0.4s;
+    }
+    @keyframes celebrate {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
 
-  /* ALPHABET GRID */
-  .section-title { text-align: center; font-size: 1.6rem; font-weight: 800; margin: 8px 0 16px; }
-  .alpha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-  .letter-card { background: #fff; border-radius: 18px; padding: 14px 8px; text-align: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.1); transition: transform .2s, box-shadow .2s; border: 3px solid transparent; user-select: none; }
-  .letter-card:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 7px 16px rgba(0,0,0,.12); }
-  .letter-card.playing { border-color: #fbbf24; transform: scale(1.08); }
-  .lc-letter { font-size: 2.4rem; font-weight: 800; line-height: 1; }
-  .lc-roman { font-size: 11px; color: #9ca3af; margin: 2px 0; }
-  .lc-pic { font-size: 2rem; margin: 4px 0; }
-  .lc-word { font-size: 11px; color: #374151; font-weight: 600; }
-  .lc-tap { font-size: 10px; color: #d1d5db; margin-top: 3px; }
-
-  /* COLORS for vowels/consonants */
-  .vowel-card { border-top: 5px solid #a855f7; }
-  .vowel-card .lc-letter { color: #7c3aed; }
-  .cons-card { border-top: 5px solid #3b82f6; }
-  .cons-card .lc-letter { color: #1d4ed8; }
-
-  /* MATCH GAME */
-  .match-area { padding: 8px 0; }
-  .match-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; align-items: center; }
-  .match-letter { background: #ede9fe; border-radius: 14px; padding: 14px; text-align: center; font-size: 2rem; font-weight: 800; color: #7c3aed; cursor: pointer; border: 3px solid transparent; transition: all .2s; }
-  .match-pic { background: #fef3c7; border-radius: 14px; padding: 14px; text-align: center; font-size: 1.8rem; cursor: pointer; border: 3px solid transparent; transition: all .2s; }
-  .match-letter.selected, .match-pic.selected { border-color: #f59e0b; background: #fef9c3; transform: scale(1.06); }
-  .match-letter.correct, .match-pic.correct { border-color: #10b981; background: #d1fae5; }
-  .match-letter.wrong, .match-pic.wrong { border-color: #ef4444; background: #fee2e2; animation: shake .3s; }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-  .match-word { font-size: 11px; font-weight: 600; color: #6b7280; }
-  .match-score { text-align: center; font-size: 1.2rem; font-weight: 700; color: #059669; margin: 10px 0; }
-  .btn-big { display: block; margin: 14px auto; padding: 12px 36px; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: 800; cursor: pointer; background: #10b981; color: #fff; box-shadow: 0 4px 0 #059669; transition: transform .15s; }
-  .btn-big:active { transform: scale(.96); }
-
-  /* QUIZ */
-  .quiz-q { text-align: center; margin-bottom: 20px; }
-  .quiz-letter { font-size: 5rem; font-weight: 900; color: #7c3aed; animation: pop .3s; }
-  @keyframes pop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
-  .quiz-prompt { font-size: 1.1rem; color: #6b7280; margin-top: 6px; }
-  .quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 500px; margin: 0 auto 16px; }
-  .quiz-opt { background: #fff; border-radius: 16px; padding: 18px 10px; text-align: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.1); font-size: 2.4rem; border: 3px solid transparent; transition: all .2s; }
-  .quiz-opt:hover { transform: scale(1.05); }
-  .quiz-opt.correct { border-color: #10b981; background: #d1fae5; animation: celebrate .4s; }
-  .quiz-opt.wrong { border-color: #ef4444; background: #fee2e2; animation: shake .3s; }
-  @keyframes celebrate { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
-  .quiz-word { font-size: 11px; font-weight: 600; color: #6b7280; display: block; margin-top: 4px; }
-  .quiz-score { text-align: center; }
-  .stars { font-size: 2rem; letter-spacing: 4px; }
-  .score-num { font-size: 1.3rem; font-weight: 700; color: #7c3aed; }
-  .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
-
-  /* PROGRESS BAR */
-  .progress-bar { background: #e5e7eb; border-radius: 99px; height: 10px; margin: 8px 0 16px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a855f7, #3b82f6); transition: width .4s; }
-
-  /* TABS */
-  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
-  .tab { padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; }
-  .tab.active { background: #7c3aed; color: #fff; }
-  .tab:not(.active) { background: #ede9fe; color: #7c3aed; }
-</style>
+    /* Fixed Confetti Layer */
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1050;
+    }
+    
+    /* Text Color Enhancements for Contrast (WCAG Compliance) */
+    .text-purple-dark { color: #5b21b6 !important; }
+    .text-blue-dark { color: #1e3a8a !important; }
+    .text-success-dark { color: #065f46 !important; }
+    .text-warning-dark { color: #854d0e !important; }
+  </style>
 </head>
 <body>
-<div id="app">
-  <div class="nav">
-    <button class="nav-btn nav-home active" onclick="showPage('home')">🏠 Home</button>
-    <button class="nav-btn nav-vowels" onclick="showPage('vowels')">அ Vowels</button>
-    <button class="nav-btn nav-cons" onclick="showPage('consonants')">க Consonants</button>
-    <button class="nav-btn nav-match" onclick="showPage('match')">🎯 Match</button>
-    <button class="nav-btn nav-quiz" onclick="showPage('quiz')">⭐ Quiz</button>
-  </div>
-  <div id="page"></div>
+
+<!-- Skip link for screen reader users -->
+<a class="visually-hidden-focusable d-block bg-dark text-white p-2 text-center" href="#page">Skip to main content</a>
+
+<div class="container py-3" style="max-width: 960px;">
+  
+  <!-- Language Selector Bar -->
+  <nav class="row g-2 justify-content-center p-2 mb-3 rounded-4" style="background-color: #ffeeda;" aria-label="Language options">
+    <div class="col-4 col-sm-3">
+      <button class="btn btn-outline-dark w-100 rounded-pill fw-bold active text-nowrap" id="btn-lang-ta" onclick="changeLanguage('ta')" aria-pressed="true">தமிழ் (Tamil)</button>
+    </div>
+    <div class="col-4 col-sm-3">
+      <button class="btn btn-outline-dark w-100 rounded-pill fw-bold text-nowrap" id="btn-lang-en" onclick="changeLanguage('en')" aria-pressed="false">English</button>
+    </div>
+    <div class="col-4 col-sm-3">
+      <button class="btn btn-outline-dark w-100 rounded-pill fw-bold text-nowrap" id="btn-lang-hi" onclick="changeLanguage('hi')" aria-pressed="false">हिन्दी</button>
+    </div>
+  </nav>
+
+  <!-- Responsive Navigation Tabs -->
+  <nav class="row g-2 justify-content-center mb-4" aria-label="Main Navigation">
+    <div class="col-6 col-sm-auto">
+      <button class="btn btn-warning w-100 rounded-pill fw-bold px-4 shadow-sm nav-btn active" id="nav-home" onclick="showPage('home')" aria-current="page">🏠 Home</button>
+    </div>
+    <div class="col-6 col-sm-auto">
+      <button class="btn btn-secondary w-100 rounded-pill fw-bold px-3 shadow-sm nav-btn" style="background-color: #8b5cf6; border-color: #8b5cf6;" id="nav-vowels" onclick="showPage('vowels')">அ Vowels</button>
+    </div>
+    <div class="col-6 col-sm-auto">
+      <button class="btn btn-primary w-100 rounded-pill fw-bold px-3 shadow-sm nav-btn" id="nav-consonants" onclick="showPage('consonants')">க Consonants</button>
+    </div>
+    <div class="col-6 col-sm-auto">
+      <button class="btn btn-success w-100 rounded-pill fw-bold px-3 shadow-sm nav-btn" id="nav-match" onclick="showPage('match')">🎯 Match</button>
+    </div>
+    <div class="col-6 col-sm-auto">
+      <button class="btn btn-danger w-100 rounded-pill fw-bold px-4 shadow-sm nav-btn" id="nav-quiz" onclick="showPage('quiz')">⭐ Quiz</button>
+    </div>
+  </nav>
+
+  <!-- Dynamic Content Yield Point -->
+  <main id="page" class="bg-transparent rounded-4 p-2" tabindex="-1"></main>
 </div>
 
-<canvas class="confetti" id="confettiCanvas"></canvas>
+<canvas class="confetti" id="confettiCanvas" aria-hidden="true"></canvas>
 
 <script>
-const vowels = [
-  {l:'அ',r:'a',pic:'🦢',word:'அன்னம்'},
-  {l:'ஆ',r:'aa',pic:'🐄',word:'ஆடு'},
-  {l:'இ',r:'i',pic:'🎶',word:'இசை'},
-  {l:'ஈ',r:'ii',pic:'🪰',word:'ஈ'},
-  {l:'உ',r:'u',pic:'🥜',word:'உளுந்து'},
-  {l:'ஊ',r:'uu',pic:'🧶',word:'ஊசி'},
-  {l:'எ',r:'e',pic:'🐂',word:'எருது'},
-  {l:'ஏ',r:'ee',pic:'🪜',word:'ஏணி'},
-  {l:'ஐ',r:'ai',pic:'🦋',word:'ஐந்து'},
-  {l:'ஒ',r:'o',pic:'🐪',word:'ஒட்டகம்'},
-  {l:'ஓ',r:'oo',pic:'🚢',word:'ஓடம்'},
-  {l:'ஔ',r:'au',pic:'💊',word:'ஔடதம்'},
-];
-const consonants = [
-  {l:'க',r:'ka',pic:'⛵',word:'கப்பல்'},
-  {l:'ங',r:'nga',pic:'🐚',word:'சங்கு'},
-  {l:'ச',r:'cha',pic:'🌙',word:'சந்திரன்'},
-  {l:'ஞ',r:'gna',pic:'🧘',word:'ஞானி'},
-  {l:'ட',r:'da',pic:'🥁',word:'டமாரம்'},
-  {l:'ண',r:'na',pic:'🥗',word:'உணவு'},
-  {l:'த',r:'tha',pic:'🐸',word:'தவளை'},
-  {l:'ந',r:'na',pic:'🧑‍🤝‍🧑',word:'நண்பன்'},
-  {l:'ப',r:'pa',pic:'🪁',word:'பட்டம்'},
-  {l:'ம',r:'ma',pic:'🔔',word:'மணி'},
-  {l:'ய',r:'ya',pic:'🐇',word:'முயல்'},
-  {l:'ர',r:'ra',pic:'🪚',word:'ரம்பம்'},
-  {l:'ல',r:'la',pic:'💰₹',word:'லட்சுமி'},
-  {l:'வ',r:'va',pic:'🐞',word:'வண்டு'},
-  {l:'ழ',r:'zha',pic:'🍎🍌🍇',word:'பழங்கள்'},
-  {l:'ள',r:'la',pic:'🌽',word:'சோளம்'},
-  {l:'ற',r:'ra',pic:'🐦',word:'பறவை'},
-  {l:'ன',r:'na',pic:'👑',word:'மன்னன்'},
-];
+// --- MULTILINGUAL DATASET WITH LOCALIZED NATIVE ALT LABELS ---
+const dataset = {
+  ta: {
+    langCode: 'ta-IN',
+    homeTitle: 'தமிழ் கற்போம்!',
+    homeSub: "Let's learn Tamil alphabets!",
+    vowelTitle: '🔵 உயிரெழுத்து — Vowels',
+    consTitle: '🔷 மெய்யெழுத்து — Consonants',
+    matchTitle: '🎯 Match the Letter!',
+    quizPrompt: 'Which picture matches this letter?',
+    successMsg: 'சாபாஷ்! மிகவும் நன்று!',
+    correctSpeech: 'சரி! சாபாஷ்!',
+    wrongSpeech: 'இல்லை...',
+    vowelLabel: 'Vowels<br>உயிரெழுத்து',
+    consLabel: 'Consonants<br>மெய்யெழுத்து',
+    matchLabel: 'Match Game<br>பொருத்து',
+    quizLabel: 'Quiz<br>வினாடி வினா',
+    mascotAlt: 'கிளி சின்னம்',
+    vowels: [
+      {l:'அ',r:'a',pic:'👩‍👦',word:'அmmaa', wordDisplay:'அம்மா', alt:'அம்மா'},
+      {l:'ஆ',r:'aa',pic:'🐄',word:'Aadu', wordDisplay:'ஆடு', alt:'ஆடு'},
+      {l:'இ',r:'i',pic:'🎶',word:'Isai', wordDisplay:'இசை', alt:'இசைக்குறிப்பு'},
+      {l:'ஈ',r:'ii',pic:'🪰',word:'Ee', wordDisplay:'ஈ', alt:'ஈ பூச்சி'},
+      {l:'உ',r:'u',pic:'🥜',word:'Ulundhu', wordDisplay:'உளுந்து', alt:'உளுந்தம்பருப்பு'},
+      {l:'ஊ',r:'uu',pic:'🧶',word:'Oosi', wordDisplay:'ஊசி', alt:'நூல் பந்துடன் ஊசி'},
+      {l:'எ',r:'e',pic:'🐂',word:'Erudhu', wordDisplay:'எருது', alt:'எருது மாடு'},
+      {l:'ஏ',r:'ee',pic:'🪜',word:'Eani', wordDisplay:'ஏணி', alt:'ஏணிப்படிக்கட்டு'},
+      {l:'ஐ',r:'ai',pic:'🖐️',word:'Aindhu', wordDisplay:'ஐந்து', alt:'ஐந்து விரல்கள் காட்டும் கை'},
+      {l:'ஒ',r:'o',pic:'🐪',word:'Ottagam', wordDisplay:'ஒட்டகம்', alt:'ஒட்டகம்'},
+      {l:'ஓ',r:'oo',pic:'🚢',word:'Odam', wordDisplay:'ஓடம்', alt:'பெரிய கப்பல்'},
+      {l:'ஔ',r:'au',pic:'💊',word:'Oudadham', wordDisplay:'ஔடதம்', alt:'மருந்து மாத்திரை'}
+    ],
+    consonants: [
+      {l:'க',r:'ka',pic:'⛵',word:'Kappal', wordDisplay:'கப்பல்', alt:'பாய்மரக் கப்பல்'},
+      {l:'ங',r:'nga',pic:'🐚',word:'Sangu', wordDisplay:'சங்கு', alt:'கடல் சங்கு'},
+      {l:'ச',r:'cha',pic:'🌙',word:'Chandhiran', wordDisplay:'சந்திரன்', alt:'பிறை நிலா'},
+      {l:'ஞ',r:'gna',pic:'🧘',word:'Gnaani', wordDisplay:'ஞானி', alt:'தியானம் செய்யும் ஞானி'},
+      {l:'ட',r:'da',pic:'🥁',word:'Damaram', wordDisplay:'டமாரம்', alt:'மேள தாள முரசு'},
+      {l:'ண',r:'na',pic:'🥗',word:'Unavu', wordDisplay:'உணவு', alt:'உணவுக் கிண்ணம்'},
+      {l:'த',r:'tha',pic:'🐸',word:'Thavalai', wordDisplay:'தவளை', alt:'தவளை'},
+      {l:'ந',r:'na',pic:'🧑‍🤝‍🧑',word:'Nanban', wordDisplay:'நண்பன்', alt:'நண்பர்கள் தழுவல்'},
+      {l:'ப',r:'pa',pic:'🪁',word:'Pattam', wordDisplay:'பட்டம்', alt:'காத்தாடி பட்டம்'},
+      {l:'ம',r:'ma',pic:'🔔',word:'Mani', wordDisplay:'மணி', alt:'கோயில் மணி'},
+      {l:'ய',r:'ya',pic:'🐇',word:'Muyal', wordDisplay:'முயல்', alt:'முயல் குட்டி'},
+      {l:'ர',r:'ra',pic:'🪚',word:'Rambam', wordDisplay:'ரம்பம்', alt:'கை ரம்பம்'},
+      {l:'ல',r:'la',pic:'🪜',word:'Leadaar', wordDisplay:'ஏணி', alt:'ஏணி'},
+      {l:'வ',r:'va',pic:'🐞',word:'Vandu', wordDisplay:'வண்டு', alt:'பொன்வண்டு'},
+      {l:'ழ',r:'zha',pic:'🍌',word:'Pazham', wordDisplay:'பழம்', alt:'வாழைப்பழம்'},
+      {l:'ள',r:'la',pic:'🌽',word:'Solam', wordDisplay:'சோளம்', alt:'சோளக்கதிர்'},
+      {l:'ற',r:'ra',pic:'🐦',word:'Paravai', wordDisplay:'பறவை', alt:'பறவை'},
+      {l:'ன',r:'na',pic:'👑',word:'Mannan', wordDisplay:'மன்னன்', alt:'அரச மகுடம்'}
+    ]
+  },
+  en: {
+    langCode: 'en-US',
+    homeTitle: 'Learn English!',
+    homeSub: "Let's explore the English alphabet!",
+    vowelTitle: '🔵 Vowels',
+    consTitle: '🔷 Consonants',
+    matchTitle: '🎯 Match Letter & Picture',
+    quizPrompt: 'Which picture belongs to this letter?',
+    successMsg: 'Splendid! You did it!',
+    correctSpeech: 'Correct! Great job!',
+    wrongSpeech: 'Try again...',
+    vowelLabel: 'Vowels<br>(A, E, I, O, U)',
+    consLabel: 'Consonants<br>(B, C, D, F...)',
+    matchLabel: 'Match Game<br>Activity',
+    quizLabel: 'Quiz<br>Challenge',
+    mascotAlt: 'Parrot mascot illustration',
+    vowels: [
+      {l:'A',r:'ae',pic:'🍎',word:'Apple', wordDisplay:'Apple', alt:'Red Apple'},
+      {l:'E',r:'ee',pic:'🐘',word:'Elephant', wordDisplay:'Elephant', alt:'Large Elephant'},
+      {l:'I',r:'ai',pic:'🍦',word:'Ice Cream', wordDisplay:'Ice Cream', alt:'Ice cream cone'},
+      {l:'O',r:'oh',pic:'🦉',word:'Owl', wordDisplay:'Owl', alt:'Wise Owl'},
+      {l:'U',r:'yu',pic:'☂️',word:'Umbrella', wordDisplay:'Umbrella', alt:'Opened Purple Umbrella'}
+    ],
+    consonants: [
+      {l:'B',r:'bee',pic:'🍌',word:'Banana', wordDisplay:'Banana', alt:'Yellow Banana'},
+      {l:'C',r:'see',pic:'🐱',word:'Cat', wordDisplay:'Cat', alt:'Cute Cat Face'},
+      {l:'D',r:'dee',pic:'🐕',word:'Dog', wordDisplay:'Dog', alt:'Friendly Pet Dog'},
+      {l:'F',r:'eff',pic:'🐟',word:'Fish', wordDisplay:'Fish', alt:'Swimming Little Fish'},
+      {l:'G',r:'jee',pic:'🍇',word:'Grapes', wordDisplay:'Grapes', alt:'Bunch of purple grapes'},
+      {l:'H',r:'aych',pic:'🏠',word:'House', wordDisplay:'House', alt:'Small family house'},
+      {l:'J',r:'jay',pic:'🍯',word:'Jar', wordDisplay:'Jar', alt:'Honey pot jar'},
+      {l:'K',r:'kay',pic:'🪁',word:'Kite', wordDisplay:'Kite', alt:'Flying toy kite'},
+      {l:'L',r:'ell',pic:'🦁',word:'Lion', wordDisplay:'Lion', alt:'Wild lion face'},
+      {l:'M',r:'em',pic:'🐒',word:'Monkey', wordDisplay:'Monkey', alt:'Playful little monkey'},
+      {l:'N',r:'en',pic:'🪺',word:'Nest', wordDisplay:'Nest', alt:'Bird nest with eggs'},
+      {l:'P',r:'pee',pic:'🐧',word:'Penguin', wordDisplay:'Penguin', alt:'Antarctic penguin'},
+      {l:'Q',r:'kyu',pic:'👑',word:'Queen', wordDisplay:'Queen', alt:'Royal golden crown'},
+      {l:'R',r:'aar',pic:'🤖',word:'Robot', wordDisplay:'Robot', alt:'Mechanical robot toy'},
+      {l:'S',r:'ess',pic:'☀️',word:'Sun', wordDisplay:'Sun', alt:'Bright glowing sun'},
+      {l:'T',r:'tee',pic:'🐯',word:'Tiger', wordDisplay:'Tiger', alt:'Wild striped tiger'},
+      {l:'V',r:'vee',pic:'🎻',word:'Violin', wordDisplay:'Violin', alt:'Classical musical violin'},
+      {l:'W',r:'double-u',pic:'🍉',word:'Watermelon', wordDisplay:'Watermelon', alt:'Juicy sliced watermelon'},
+      {l:'X',r:'ex',pic:'🪵',word:'Xylophone', wordDisplay:'Xylophone', alt:'Wooden percussion xylophone'},
+      {l:'Y',r:'wai',pic:'⛵',word:'Yacht', wordDisplay:'Yacht', alt:'Sailing yacht boat'},
+      {l:'Z',r:'zed',pic:'🦓',word:'Zebra', wordDisplay:'Zebra', alt:'African striped zebra'}
+    ]
+  },
+  hi: {
+    langCode: 'hi-IN',
+    homeTitle: 'हिन्दी सीखें!',
+    homeSub: 'आइए हिन्दी वर्णमाला का सफर शुरू करें!',
+    vowelTitle: '🔵 स्वर — Vowels',
+    consTitle: '🔷 व्यंजन — Consonants',
+    matchTitle: '🎯 मिलान खेल!',
+    quizPrompt: 'इस अक्षर के लिए सही चित्र कौन सा है?',
+    successMsg: 'बहुत बढ़िया! अद्भुत कार्य!',
+    correctSpeech: 'सही उत्तर! बहुत अच्छे!',
+    wrongSpeech: 'गलत जवाब...',
+    vowelLabel: 'स्वर<br>Vowels',
+    consLabel: 'व्यंजन<br>Consonants',
+    matchLabel: 'मिलान खेल<br>Match Game',
+    quizLabel: 'प्रश्नोत्तरी<br>Quiz',
+    mascotAlt: 'तोता शुभंकर चित्र',
+    vowels: [
+      {l:'अ',r:'a',pic:'🍎',word:'Amrood', wordDisplay:'अमरूद', alt:'अमरूद का फल'},
+      {l:'आ',r:'aa',pic:'🥭',word:'Aam', wordDisplay:'आम', alt:'रसीला आम का फल'},
+      {l:'इ',r:'i',pic:'🫚',word:'Imli', wordDisplay:'इमली', alt:'खट्टी इमली'},
+      {l:'ई',r:'ii',pic:'🪵',word:'Eekh', wordDisplay:'ईख', alt:'गन्ने की डंडी'},
+      {l:'उ',r:'u',pic:'🦉',word:'Ullu', wordDisplay:'उल्लू', alt:'रात का उल्लू पक्षी'},
+      {l:'ऊ',r:'uu',pic:'🧶',word:'Oon', wordDisplay:'ऊन', alt:'ऊन का गोला'},
+      {l:'ऋ',r:'ri',pic:'🧘',word:'Rishi', wordDisplay:'ऋषि', alt:'ध्यान मग्न तपस्वी ऋषि'},
+      {l:'ए',r:'e',pic:'👣',word:'Edee', wordDisplay:'एड़ी', alt:'पैर की एड़ी'},
+      {l:'ऐ',r:'ai',pic:'👓',word:'Ainak', wordDisplay:'ऐनक', alt:'आंखों का चश्मा'},
+      {l:'ओ',r:'o',pic:'🪨',word:'Okhli', wordDisplay:'ओखली', alt:'पत्थर की ओखली'},
+      {l:'औ',r:'au',pic:'👩',word:'Aurat', wordDisplay:'औरत', alt:'एक घरेलू महिला'},
+      {l:'अं',r:'am',pic:'🍇',word:'Angoor', wordDisplay:'अंगूर', alt:'अंगूर का गुच्छा'}
+    ],
+    consonants: [
+      {l:'क',r:'ka',pic:'🪷',word:'Kamal', wordDisplay:'कमल', alt:'कमल का फूल'},
+      {l:'ख',r:'kha',pic:'🐰',word:'Khargosh', wordDisplay:'खरगोश', alt:'सफेद प्यारा खरगोश'},
+      {l:'ग',r:'ga',pic:'🪴',word:'Gamla', wordDisplay:'गमला', alt:'पौधे सहित गमला'},
+      {l:'घ',r:'gha',pic:'🏠',word:'Ghar', wordDisplay:'घर', alt:'एक छोटा मकान'},
+      {l:'च',r:'cha',pic:' Spoon',word:'Chammach', wordDisplay:'चम्मच', alt:'स्टील की चम्मच'},
+      {l:'छ',r:'chha',pic:'☂️',word:'Chhatri', wordDisplay:'छतरी', alt:'खुली हुई छतरी'},
+      {l:'ज',r:'ja',pic:'🚢',word:'Jahaz', wordDisplay:'जहाज', alt:'समुद्री पानी का जहाज'},
+      {l:'झ',r:'jha',pic:'🚩',word:'Jhanda', wordDisplay:'झंडा', alt:'त्रिकोणीय लहराता झंडा'},
+      {l:'ट',r:'ta',pic:'🍅',word:'Tamatar', wordDisplay:'टमाटर', alt:'लाल पका हुआ टमाटर'},
+      {l:'ठ',r:'tha',pic:'🔨',word:'Thathera', wordDisplay:'ठठेरा', alt:'बर्तन बनाने वाला ठठेरा'},
+      {l:'ड',r:'da',pic:'🥁',word:'Damru', wordDisplay:'डमरू', alt:'शिवजी का डमरू बाजा'},
+      {l:'ढ',r:'dha',pic:'🛡️',word:'Dhaal', wordDisplay:'ढाल', alt:'लोहे की सुरक्षा ढाल'},
+      {l:'त',r:'tha',pic:'🍉',word:'Tarbooj', wordDisplay:'तरबूज', alt:'कटा हुआ लाल तरबूज'},
+      {l:'थ',r:'thha',pic:'🥛',word:'Thermas', wordDisplay:'थर्मस', alt:'पानी की बोतल थर्मस'},
+      {l:'द',r:'da',pic:'🖋️',word:'Davaat', wordDisplay:'दवात', alt:'स्याही रखने की दवात'},
+      {l:'ध',r:'dha',pic:'🏹',word:'Dhanush', wordDisplay:'धनुष', alt:'तीर कमान का धनुष'},
+      {l:'न',r:'na',pic:'🚰',word:'Nal', wordDisplay:'नल', alt:'पानी का नल टोंटी'},
+      {l:'प',r:'pa',pic:'🪁',word:'Patang', wordDisplay:'पतंग', alt:'हवा में उड़ती पतंग'},
+      {l:'फ',r:'pha',pic:'🍎🍉🍇',word:'Phal', wordDisplay:'फल', alt:'मिश्रित मीठे ताजे फल'},
+      {l:'ब',r:'ba',pic:'🦆',word:'Battakh', wordDisplay:'बत्तख', alt:'पानी की सफेद बत्तख'},
+      {l:'भ',r:'bha',pic:'🐻',word:'Bhalu', wordDisplay:'भालू', alt:'जंगली भूरा भालू'},
+      {l:'म',r:'ma',pic:'🐟',word:'Machhli', wordDisplay:'मछली', alt:'पानी में तैरती मछली'},
+      {l:'य',r:'ya',pic:'🔥',word:'Yagya', wordDisplay:'यज्ञ', alt:'हवन कुंड की पावन अग्नि'},
+      {l:'र',r:'ra',pic:'👑',word:'Rath', wordDisplay:'रथ', alt:'राजा का शाही रथ'},
+      {l:'ल',r:'la',pic:'🪀',word:'Lattu', wordDisplay:'लट्टू', alt:'घूमने वाला खिलौना लट्टू'},
+      {l:'व',r:'va',pic:'🌳',word:'Van', wordDisplay:'वन', alt:'घने हरे भरे पेड़ वन'},
+      {l:'श',r:'sha',pic:'🧅',word:'Shalgam', wordDisplay:'शलगम', alt:'शलगम की जड़ सब्जी'},
+      {l:'ष',r:'sha',pic:'📐',word:'Shatkon', wordDisplay:'षट्कोण', alt:'छह कोनों वाली ज्यामिति आकृति'},
+      {l:'स',r:'sa',pic:'🍎',word:'Seb', wordDisplay:'सेब', alt:'एक ताजा लाल सेब फल'},
+      {l:'ह',r:'ha',pic:'🐘',word:'Haathi', wordDisplay:'हाथी', alt:'बड़ा सूंड वाला हाथी जानवर'}
+    ]
+  }
+};
 
+let currentLang = 'ta';
 let currentPage = 'home';
 let synth = window.speechSynthesis;
-let tamilVoice = null;
+let currentVoice = null;
 
 function loadVoice() {
+  if (!synth) return;
   const voices = synth.getVoices();
-  // Priority: Tamil female > Tamil any > Indian English female > Indian English any
-  tamilVoice =
-    voices.find(v => /ta/i.test(v.lang) && /female|woman/i.test(v.name)) ||
-    voices.find(v => /ta-IN/i.test(v.lang)) ||
-    voices.find(v => /ta/i.test(v.lang)) ||
-    voices.find(v => /en-IN/i.test(v.lang) && /female|woman/i.test(v.name)) ||
-    voices.find(v => /en-IN/i.test(v.lang)) ||
-    voices.find(v => /female|woman/i.test(v.name)) ||
+  const targetLang = dataset[currentLang].langCode;
+  
+  currentVoice = 
+    voices.find(v => v.lang.includes(targetLang) && /female|woman/i.test(v.name)) ||
+    voices.find(v => v.lang.includes(targetLang)) ||
+    voices.find(v => v.lang.startsWith(targetLang.split('-')[0])) ||
+    voices.find(v => /female|woman/i.test(v.name)) || 
     null;
 }
 
-if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoice;
+if (synth && synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoice;
 loadVoice();
 
-// Sound effects using Web Audio API
+function changeLanguage(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-bar button').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  const activeLangBtn = document.getElementById(`btn-lang-${lang}`);
+  activeLangBtn.classList.add('active');
+  activeLangBtn.setAttribute('aria-pressed', 'true');
+  
+  document.getElementById('nav-vowels').innerText = currentLang === 'ta' ? 'அ Vowels' : currentLang === 'hi' ? 'अ Vowels' : 'A Vowels';
+  document.getElementById('nav-consonants').innerText = currentLang === 'ta' ? 'க Consonants' : currentLang === 'hi' ? 'क Consonants' : 'B Consonants';
+  
+  loadVoice();
+  showPage(currentPage);
+}
+
+// Sound FX Generators using Web Audio API
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
@@ -191,14 +377,8 @@ function playWrong() {
   setTimeout(() => playTone(250, 'sawtooth', 0.2, 0.25), 150);
 }
 
-function playTap() {
-  playTone(880, 'sine', 0.1, 0.15);
-}
-
-function playMatch() {
-  // Indian-ish celebratory arpeggio
-  [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'sine',0.18,0.28), i*90));
-}
+function playTap() { playTone(880, 'sine', 0.1, 0.15); }
+function playMatch() { [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'sine',0.18,0.28), i*90)); }
 
 let quizScore = 0;
 let quizTotal = 0;
@@ -209,123 +389,174 @@ let matchData = [];
 let matchScore = 0;
 let confettiAnim = null;
 
-function speak(text, onend) {
+function speak(text) {
   if (!synth) return;
   synth.cancel();
   let u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ta-IN';
-  u.rate = 0.8;
-  u.pitch = 1.2;
-  if (tamilVoice) u.voice = tamilVoice;
-  if (onend) u.onend = onend;
+  u.lang = dataset[currentLang].langCode;
+  u.rate = 0.85;
+  if (currentVoice) u.voice = currentVoice;
   synth.speak(u);
 }
 
-function speakLetter(letter, word, cardEl) {
+function speakLetter(letter, phoneticWord, cardEl) {
   if (cardEl) {
     cardEl.classList.add('playing');
     setTimeout(() => cardEl.classList.remove('playing'), 900);
   }
   playTap();
-  speak(letter + '... ' + word);
+  speak(letter + '... ' + phoneticWord);
+}
+
+// Keyboard access helper function for synthetic components
+function handleCardKey(event, action) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    action();
+  }
 }
 
 function showPage(p) {
   currentPage = p;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const map = {home:'nav-home',vowels:'nav-vowels',consonants:'nav-cons',match:'nav-match',quiz:'nav-quiz'};
-  document.querySelector('.'+map[p])?.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.remove('active');
+    b.removeAttribute('aria-current');
+  });
+  const currentNav = document.getElementById(`nav-${p}`);
+  if(currentNav) {
+    currentNav.classList.add('active');
+    currentNav.setAttribute('aria-current', 'page');
+  }
+  
   const el = document.getElementById('page');
-  if (p === 'home') el.innerHTML = renderHome();
-  else if (p === 'vowels') el.innerHTML = renderAlpha('vowels');
-  else if (p === 'consonants') el.innerHTML = renderAlpha('consonants');
-  else if (p === 'match') { initMatch(); el.innerHTML = renderMatch(); }
-  else if (p === 'quiz') { initQuiz(); el.innerHTML = renderQuiz(); }
+  const data = dataset[currentLang];
+
+  if (p === 'home') el.innerHTML = renderHome(data);
+  else if (p === 'vowels') el.innerHTML = renderAlpha('vowels', data);
+  else if (p === 'consonants') el.innerHTML = renderAlpha('consonants', data);
+  else if (p === 'match') { initMatch(); el.innerHTML = renderMatch(data); }
+  else if (p === 'quiz') { initQuiz(); el.innerHTML = renderQuiz(data); }
 }
 
-function renderHome() {
-  return `<div class="home">
-    <div class="mascot">🦚</div>
-    <div class="home-title">தமிழ் கற்போம்!</div>
-    <div class="home-sub">Let's learn Tamil alphabets!</div>
-    <div class="home-cards">
-      <div class="home-card" onclick="showPage('vowels')" style="background:#ede9fe">
-        <div class="hc-icon">அ</div>
-        <div class="hc-label" style="color:#7c3aed">Vowels<br>உயிரெழுத்து</div>
+function renderHome(data) {
+  return `<div class="text-center py-4">
+    <div class="mascot mb-2" role="img" aria-label="${data.mascotAlt}">🦜</div>
+    <h1 class="display-5 fw-black text-purple-dark mb-1">${data.homeTitle}</h1>
+    <p class="lead text-muted mb-4">${data.homeSub}</p>
+    <div class="row g-3 justify-content-center">
+      <div class="col-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm home-card rounded-4 p-3 text-center" 
+             role="button" tabindex="0" onclick="showPage('vowels')" onkeydown="handleCardKey(event, () => showPage('vowels'))" style="background-color: #ede9fe;">
+          <div class="display-6 fw-bold text-purple-dark">${data.vowels[0].l}</div>
+          <div class="fw-bold small text-secondary mt-2">${data.vowelLabel}</div>
+        </div>
       </div>
-      <div class="home-card" onclick="showPage('consonants')" style="background:#dbeafe">
-        <div class="hc-icon">க</div>
-        <div class="hc-label" style="color:#1d4ed8">Consonants<br>மெய்யெழுத்து</div>
+      <div class="col-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm home-card rounded-4 p-3 text-center" 
+             role="button" tabindex="0" onclick="showPage('consonants')" onkeydown="handleCardKey(event, () => showPage('consonants'))" style="background-color: #dbeafe;">
+          <div class="display-6 fw-bold text-blue-dark">${data.consonants[0].l}</div>
+          <div class="fw-bold small text-secondary mt-2">${data.consLabel}</div>
+        </div>
       </div>
-      <div class="home-card" onclick="showPage('match')" style="background:#d1fae5">
-        <div class="hc-icon">🎯</div>
-        <div class="hc-label" style="color:#059669">Match Game<br>பொருத்து</div>
+      <div class="col-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm home-card rounded-4 p-3 text-center" 
+             role="button" tabindex="0" onclick="showPage('match')" onkeydown="handleCardKey(event, () => showPage('match'))" style="background-color: #d1fae5;">
+          <div class="display-6" role="img" aria-label="🎯">🎯</div>
+          <div class="fw-bold small text-success-dark mt-2">${data.matchLabel}</div>
+        </div>
       </div>
-      <div class="home-card" onclick="showPage('quiz')" style="background:#fef9c3">
-        <div class="hc-icon">⭐</div>
-        <div class="hc-label" style="color:#b45309">Quiz<br>வினாடி வினா</div>
+      <div class="col-6 col-md-3">
+        <div class="card h-100 border-0 shadow-sm home-card rounded-4 p-3 text-center" 
+             role="button" tabindex="0" onclick="showPage('quiz')" onkeydown="handleCardKey(event, () => showPage('quiz'))" style="background-color: #fef9c3;">
+          <div class="display-6" role="img" aria-label="⭐">⭐</div>
+          <div class="fw-bold small text-warning-dark mt-2">${data.quizLabel}</div>
+        </div>
       </div>
     </div>
   </div>`;
 }
 
-function renderAlpha(type) {
-  const items = type === 'vowels' ? vowels : consonants;
-  const cls = type === 'vowels' ? 'vowel-card' : 'cons-card';
-  const title = type === 'vowels' ? '🔵 உயிரெழுத்து — Vowels' : '🔷 மெய்யெழுத்து — Consonants';
-  let cards = items.map((it,i) => `
-    <div class="letter-card ${cls}" id="lc${type}${i}" onclick="speakLetter('${it.l}','${it.word}',this)">
-      <div class="lc-letter">${it.l}</div>
-      <div class="lc-roman">${it.r}</div>
-      <div class="lc-pic">${it.pic}</div>
-      <div class="lc-word">${it.word}</div>
-      <div class="lc-tap">👆 tap!</div>
+function renderAlpha(type, data) {
+  const items = type === 'vowels' ? data.vowels : data.consonants;
+  const isVowel = type === 'vowels';
+  const borderStyle = isVowel ? 'border-top: 5px solid #8b5cf6;' : 'border-top: 5px solid #3b82f6;';
+  const letterColorClass = isVowel ? 'text-purple-dark' : 'text-blue-dark';
+  const title = isVowel ? data.vowelTitle : data.consTitle;
+  
+  let cards = items.map((it, i) => `
+    <div class="col-4 col-sm-3 col-md-2">
+      <div class="card h-100 bg-white border-3 border-transparent rounded-4 p-2 text-center shadow-sm letter-card" 
+           role="button" tabindex="0" aria-label="Letter ${it.l}, pronounced as ${it.r}. Example word: ${it.wordDisplay}"
+           style="${borderStyle}" id="lc${type}${i}" onclick="speakLetter('${it.l}','${it.word}',this)" onkeydown="handleCardKey(event, () => speakLetter('${it.l}','${it.word}',document.getElementById('lc${type}${i}')))">
+        <div class="display-6 fw-bolder ${letterColorClass}">${it.l}</div>
+        <div class="text-muted small fw-bold mb-1" style="font-size: 11px;">${it.r}</div>
+        <div style="font-size: 2rem;" class="my-1" role="img" aria-label="${it.alt}">${it.pic}</div>
+        <div class="fw-bold text-dark small text-truncate" style="font-size: 13px;">${it.wordDisplay}</div>
+        <div class="text-black-50" style="font-size: 10px; margin-top:2px;">👆 tap!</div>
+      </div>
     </div>`).join('');
-  return `<div class="section-title">${title}</div><div class="alpha-grid">${cards}</div>`;
+    
+  return `
+    <h3 class="text-center fw-bold my-3">${title}</h3>
+    <div class="row g-3 justify-content-center">${cards}</div>`;
 }
 
 function shuffle(arr) { return [...arr].sort(()=>Math.random()-.5); }
 
 function initMatch() {
-  const pool = shuffle([...vowels,...consonants]).slice(0,6);
+  const data = dataset[currentLang];
+  const pool = shuffle([...data.vowels, ...data.consonants]).slice(0, 6);
   matchData = pool;
   matchState = { sel: null, selType: null, matched: new Set(), wrong: null };
   matchScore = 0;
 }
 
-function renderMatch() {
+function renderMatch(data) {
   const pics = shuffle(matchData.map((it,i)=>({...it,idx:i})));
-  let rows = matchData.map((it,i)=>`
-    <div class="match-letter" id="ml${i}" onclick="matchClick('letter',${i})">${it.l}</div>
-    <div class="match-pic" id="mp${pics.findIndex(p=>p.idx===i)}" data-idx="${i}" onclick="matchClick('pic',${pics.findIndex(p=>p.idx===i)})">${it.pic}<span class="match-word">${it.word}</span></div>
-  `).join('');
-  // Actually render as two separate columns
-  let letters = matchData.map((it,i)=>`<div class="match-letter" id="ml${i}" onclick="matchClick('letter',${i})">${it.l}</div>`).join('');
-  let picsHtml = pics.map((it,i)=>`<div class="match-pic" id="mp${i}" data-idx="${it.idx}" onclick="matchClick('pic',${i})">${it.pic}<div class="match-word">${it.word}</div></div>`).join('');
+  let letters = matchData.map((it,i)=>`
+    <div class="card p-3 border-2 text-center fw-black rounded-4 shadow-sm match-letter mb-2" 
+         role="button" tabindex="0" aria-label="Match item letter: ${it.l}"
+         style="background-color: #ede9fe; color: #5b21b6; font-size: 1.8rem;" id="ml${i}" onclick="matchClick('letter',${i})" onkeydown="handleCardKey(event, () => matchClick('letter',${i}))">${it.l}</div>`).join('');
+         
+  let picsHtml = pics.map((it,i)=>`
+    <div class="card p-2 border-2 text-center rounded-4 shadow-sm match-pic mb-2" 
+         role="button" tabindex="0" aria-label="Match item picture: ${it.alt} associated with word ${it.wordDisplay}"
+         id="mp${i}" data-idx="${it.idx}" onclick="matchClick('pic',${i})" onkeydown="handleCardKey(event, () => matchClick('pic',${i}))">
+      <div style="font-size: 1.6rem; line-height:1;" role="img" aria-label="${it.alt}">${it.pic}</div>
+      <div class="fw-bold text-muted mt-1" style="font-size: 11px;">${it.wordDisplay}</div>
+    </div>`).join('');
+    
   window._matchPics = pics;
-  return `<div class="section-title">🎯 Match the Letter!</div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto">
-    <div style="display:flex;flex-direction:column;gap:10px">${letters}</div>
-    <div style="display:flex;flex-direction:column;gap:10px">${picsHtml}</div>
-  </div>
-  <button class="btn-big" onclick="initMatch();showPage('match')">🔄 New Game</button>`;
+  
+  return `
+    <h3 class="text-center fw-bold my-3">${data.matchTitle}</h3>
+    <div class="row g-3 justify-content-center m-auto" style="max-width: 500px;">
+      <div class="col-6">${letters}</div>
+      <div class="col-6">${picsHtml}</div>
+    </div>
+    <div class="text-center mt-3">
+      <button class="btn btn-success rounded-pill px-4 fw-bold shadow" onclick="initMatch();showPage('match')">🔄 New Game</button>
+    </div>`;
 }
 
 function matchClick(type, idx) {
   const pics = window._matchPics;
+  const data = dataset[currentLang];
+  const currentEl = document.getElementById((type==='letter'?'ml':'mp')+idx);
+
   if (matchState.sel === null) {
     matchState.sel = idx;
     matchState.selType = type;
-    const el = document.getElementById((type==='letter'?'ml':'mp')+idx);
-    if (el) el.classList.add('selected');
+    currentEl?.classList.add('selected');
+    currentEl?.setAttribute('aria-pressed', 'true');
   } else {
+    const previousEl = document.getElementById((matchState.selType==='letter'?'ml':'mp')+matchState.sel);
     if (matchState.selType === type) {
-      const old = document.getElementById((matchState.selType==='letter'?'ml':'mp')+matchState.sel);
-      if (old) old.classList.remove('selected');
+      previousEl?.classList.remove('selected');
+      previousEl?.removeAttribute('aria-pressed');
       matchState.sel = idx;
-      const el = document.getElementById((type==='letter'?'ml':'mp')+idx);
-      if (el) el.classList.add('selected');
+      currentEl?.classList.add('selected');
+      currentEl?.setAttribute('aria-pressed', 'true');
       return;
     }
     let letterIdx = type === 'letter' ? idx : matchState.sel;
@@ -333,17 +564,32 @@ function matchClick(type, idx) {
     const picDataIdx = pics[picSlot].idx;
     const lEl = document.getElementById('ml'+letterIdx);
     const pEl = document.getElementById('mp'+picSlot);
+    
     if (letterIdx === picDataIdx) {
-      if (lEl) { lEl.classList.remove('selected'); lEl.classList.add('correct'); }
-      if (pEl) { pEl.classList.remove('selected'); pEl.classList.add('correct'); }
+      lEl?.classList.remove('selected'); lEl?.classList.add('correct');
+      pEl?.classList.remove('selected'); pEl?.classList.add('correct');
+      lEl?.setAttribute('aria-disabled', 'true');
+      pEl?.setAttribute('aria-disabled', 'true');
+      lEl?.removeAttribute('aria-pressed');
+      pEl?.removeAttribute('aria-pressed');
       matchScore++;
       playMatch();
       speak(matchData[letterIdx].l + '... ' + matchData[letterIdx].word);
-      if (matchScore === matchData.length) { setTimeout(()=>{ launchConfetti(); speak('சாபாஷ்! மிகவும் நன்று!'); }, 200); }
+      if (matchScore === matchData.length) { 
+        setTimeout(()=>{ launchConfetti(); speak(data.successMsg); }, 200); 
+      }
     } else {
       playWrong();
-      if (lEl) { lEl.classList.remove('selected'); lEl.classList.add('wrong'); setTimeout(()=>lEl.classList.remove('wrong'),500); }
-      if (pEl) { pEl.classList.remove('selected'); pEl.classList.add('wrong'); setTimeout(()=>pEl.classList.remove('wrong'),500); }
+      if (lEl) { 
+        lEl.classList.remove('selected'); lEl.classList.add('wrong'); 
+        lEl.removeAttribute('aria-pressed');
+        setTimeout(()=>lEl.classList.remove('wrong'),500); 
+      }
+      if (pEl) { 
+        pEl.classList.remove('selected'); pEl.classList.add('wrong'); 
+        pEl.removeAttribute('aria-pressed');
+        setTimeout(()=>pEl.classList.remove('wrong'),500); 
+      }
     }
     matchState.sel = null;
     matchState.selType = null;
@@ -357,59 +603,65 @@ function initQuiz() {
 
 function nextQuiz() {
   quizAnswered = false;
-  const all = [...vowels, ...consonants];
+  const data = dataset[currentLang];
+  const all = [...data.vowels, ...data.consonants];
   const correct = all[Math.floor(Math.random()*all.length)];
   let opts = [correct];
   while (opts.length < 4) {
     const o = all[Math.floor(Math.random()*all.length)];
     if (!opts.find(x=>x.l===o.l)) opts.push(o);
   }
-  opts = shuffle(opts);
-  quizCurrent = { correct, opts };
+  quizCurrent = { correct, opts: shuffle(opts) };
   quizTotal++;
 }
 
-function renderQuiz() {
+function renderQuiz(data) {
   if (!quizCurrent) return '';
   const {correct, opts} = quizCurrent;
-  let optHtml = opts.map((o,i)=>`
-    <div class="quiz-opt" id="qo${i}" onclick="checkQuiz(${i})">
-      ${o.pic}<span class="quiz-word">${o.word}</span>
+  let optHtml = opts.map((o, i)=>`
+    <div class="col-6">
+      <div class="card bg-white p-3 border-3 border-transparent rounded-4 shadow-sm text-center quiz-opt h-100" 
+           role="button" tabindex="0" aria-label="Option ${i+1}: ${o.wordDisplay}"
+           id="qo${i}" onclick="checkQuiz(${i})" onkeydown="handleCardKey(event, () => checkQuiz(${i}))">
+        <div class="display-5" role="img" aria-label="${o.alt}">${o.pic}</div>
+        <div class="fw-bold text-secondary mt-1" style="font-size: 13px;">${o.wordDisplay}</div>
+      </div>
     </div>`).join('');
-  const answered = quizTotal - 1;
-  return `<div class="quiz-q">
-    <div class="quiz-letter" id="quizLetter">${correct.l}</div>
-    <div class="quiz-prompt">Which picture matches this letter?</div>
-  </div>
-  <div class="quiz-opts">${optHtml}</div>
-  `;
+    
+  return `
+    <div class="text-center py-2">
+      <div class="display-2 fw-black text-purple-dark bounce-in" style="font-weight:900;" aria-label="Identify letter: ${correct.l}">${correct.l}</div>
+      <p class="text-muted fw-bold">${data.quizPrompt}</p>
+    </div>
+    <div class="row g-3 m-auto mb-3" style="max-width: 480px;">${optHtml}</div>
+    <div class="text-center fw-bold fs-5 text-purple-dark" aria-live="polite">Score: ${quizScore} / ${quizTotal - 1}</div>`;
 }
 
 function checkQuiz(i) {
   if (quizAnswered) return;
   quizAnswered = true;
+  const data = dataset[currentLang];
   const {correct, opts} = quizCurrent;
   const chosen = opts[i];
   const el = document.getElementById('qo'+i);
+  
   if (chosen.l === correct.l) {
     el.classList.add('correct');
     quizScore++;
     playCorrect();
-    speak('சரி! சாபாஷ்! ' + correct.l + '... ' + correct.word);
+    speak(data.correctSpeech + ' ' + correct.l + '... ' + correct.word);
     launchConfetti();
   } else {
     el.classList.add('wrong');
     const ci = opts.findIndex(o=>o.l===correct.l);
     document.getElementById('qo'+ci)?.classList.add('correct');
     playWrong();
-    speak('இல்லை... ' + correct.l + '... ' + correct.word);
+    speak(data.wrongSpeech + ' ' + correct.l + '... ' + correct.word);
   }
-  const scoreEl = document.getElementById('quizScoreNum');
-  if (scoreEl) scoreEl.textContent = `Score: ${quizScore} / ${quizTotal}`;
-  setTimeout(()=>{ nextQuiz(); showPage('quiz'); }, 1400);
+  setTimeout(()=>{ nextQuiz(); showPage('quiz'); }, 1800);
 }
 
-// Confetti
+// Full Canvas Particles Confetti System
 function launchConfetti() {
   const canvas = document.getElementById('confettiCanvas');
   const ctx = canvas.getContext('2d');
@@ -425,15 +677,9 @@ function launchConfetti() {
   function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
     pieces.forEach(p => {
-      p.tiltAngle += p.tiltSpeed;
-      p.y += (Math.cos(t+p.d)+1.5)*1.8;
-      p.x += Math.sin(t)*1.2;
-      p.tilt = Math.sin(p.tiltAngle)*12;
-      ctx.beginPath(); ctx.lineWidth=p.r;
-      ctx.strokeStyle = p.color;
-      ctx.moveTo(p.x+p.tilt+p.r/3,p.y);
-      ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/2);
-      ctx.stroke();
+      p.tiltAngle += p.tiltSpeed; p.y += (Math.cos(t+p.d)+1.5)*1.8; p.x += Math.sin(t)*1.2; p.tilt = Math.sin(p.tiltAngle)*12;
+      ctx.beginPath(); ctx.lineWidth=p.r; ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x+p.tilt+p.r/3,p.y); ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/2); ctx.stroke();
     });
     t+=.04;
     if (t < 3.5) confettiAnim = requestAnimationFrame(draw);
@@ -442,6 +688,7 @@ function launchConfetti() {
   draw();
 }
 
+// Boot up app initialization
 showPage('home');
 </script>
 </body>
